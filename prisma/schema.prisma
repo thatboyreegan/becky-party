@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -26,4 +25,62 @@ model Guest {
   validatedAtVenue Boolean  @default(false)
   creeatedAt       DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  hostId           Int?
+  host             Host?    @relation(fields: [hostId], references: [id])
+  votes            Vote[]
+  songs            Song[]   @relation("AddedBy")
+}
+
+model Song {
+  id          Int       @id @default(autoincrement())
+  spotifyId   String    @unique
+  title       String
+  artist      String
+  albumArt    String?
+  releaseYear Int?
+  addedById   Int?
+  addedBy     Guest?    @relation("AddedBy", fields: [addedById], references: [id])
+  votesCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  votes       Vote[]
+  Playlist    Playlist? @relation(fields: [playlistId], references: [id])
+  playlistId  Int?
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  guestId   Int
+  songId    Int
+  createdAt DateTime @default(now())
+
+  guest Guest @relation(fields: [guestId], references: [id])
+  song  Song  @relation(fields: [songId], references: [id])
+
+  @@unique([guestId, songId])
+}
+
+model Host {
+  id                    Int        @id @default(autoincrement())
+  name                  String
+  hostToken             String     @unique @default(uuid())
+  spotifyAccessToken    String?
+  spotifyRefreshToken   String?
+  spotifyTokenExpiresAt DateTime? // unix time or Date
+  createdAt             DateTime   @default(now())
+  Playlist              Playlist[]
+  Guest                 Guest[]
+}
+
+model Playlist {
+  id        Int      @id @default(autoincrement())
+  name      String
+  theme     String?
+  eraStart  Int?
+  eraEnd    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  songs     Song[]
+  hostId    Int?
+  host      Host?    @relation(fields: [hostId], references: [id])
+  spotifyId String?
 }
