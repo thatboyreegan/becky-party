@@ -1,8 +1,8 @@
 import { prisma } from "./db.server";
 
-export async function getValidSpotifyToken(hostId: number) {
+export async function getValidSpotifyToken(hostToken: string) {
   const host = await prisma.host.findUnique({
-    where: { id: hostId },
+    where: { hostToken },
     select: {
       spotifyAccessToken: true,
       spotifyRefreshToken: true,
@@ -45,7 +45,7 @@ export async function getValidSpotifyToken(hostId: number) {
   const expiresAt = new Date(Date.now() + data.expires_in * 1000);
 
   await prisma.host.update({
-    where: { id: hostId },
+    where: { hostToken },
     data: {
       spotifyAccessToken: newAccessToken,
       spotifyTokenExpiresAt: expiresAt,

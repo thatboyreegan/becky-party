@@ -16,20 +16,44 @@ export function SpotifySearchBox({
   eraEnd,
 }: {
   token: string;
-  playlistId?: string;
+  playlistId: string;
   eraStart?: number | null;
   eraEnd?: number | null;
 }) {
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [cache, setCache] = useState<Record<string, Track[]>>(() => {
-    const saved = localStorage.getItem("songSearchCache");
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [cache, setCache] = useState<Record<string, Track[]>>({});
+  const [hostId, setHostId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (typeof window === "undefined") return;
+    const savedHost = sessionStorage.getItem("host");
+    if (savedHost) {
+      try {
+        const host = JSON.parse(savedHost);
+        setHostId(host?.id || null);
+      } catch {
+        console.warn("Invalid host in sessionStorage");
+      }
+    }
+
+    const saved = localStorage.getItem("songSearchCache");
+    if (saved) {
+      try {
+        setCache(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem("songSearchCache");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setTracks([]);
+      setLoading(false);
+      return;
+    }
 
     const cacheKey = `${query.toLowerCase()}_${eraStart}_${eraEnd}`;
 
@@ -42,6 +66,7 @@ export function SpotifySearchBox({
       const params = new URLSearchParams({
         query,
         token,
+        ...(hostId ? { hostId: hostId.toString() } : {}),
         ...(eraStart ? { eraStart: eraStart.toString() } : {}),
         ...(eraEnd ? { eraEnd: eraEnd.toString() } : {}),
       });
@@ -59,7 +84,7 @@ export function SpotifySearchBox({
     }, 500);
 
     return () => clearTimeout(delay);
-  }, [query, eraStart, eraEnd, token]);
+  }, [query, eraStart, eraEnd, token, tracks]);
   return (
     <div className="relative w-full max-w-lg mx-auto">
       <input
@@ -84,7 +109,7 @@ export function SpotifySearchBox({
               </div>
               <AddToPlaylistButton
                 trackUri={`spotify:track:${t.id}`}
-                playlistId={playlistId!}
+                playlistId={playlistId}
                 token={token}
               />
             </li>

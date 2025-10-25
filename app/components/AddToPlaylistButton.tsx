@@ -12,19 +12,21 @@ export function AddToPlaylistButton({
   const [added, setAdded] = useState(false);
 
   async function handleAdd() {
-    const formData = new FormData();
-    formData.append("playlist", playlistId);
-    formData.append("trackUri", trackUri);
-    formData.append("token", token);
-
+    console.log("playlistId:", playlistId);
+    console.log("trackUri:", trackUri);
     const res = await fetch("/api/spotify/add", {
       method: "POST",
-      body: formData,
+      body: JSON.stringify({
+        playlistId,
+        trackUri,
+        token,
+      }),
     });
 
     const data = await res.json();
     if (data.success) setAdded(true);
     if (res.ok) {
+      window.dispatchEvent(new Event("playlist:updated"));
       alert("✅ Song added to playlist!");
     } else {
       alert("❌ Failed to add song.");
