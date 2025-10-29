@@ -9,7 +9,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@prisma/client": "^6.17.1",
+    "@prisma/client": "^6.18.0",
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
     "isbot": "^5.1.31",
@@ -24,7 +24,7 @@
     "@types/node": "^22.18.10",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "prisma": "^6.17.1",
+    "prisma": "^6.18.0",
     "tailwindcss": "^4.1.13",
     "ts-node": "^10.9.2",
     "typescipt": "^1.0.0",

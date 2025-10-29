@@ -23,8 +23,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const hostId = Number(url.searchParams.get("host"));
   const guests = await getGuests(hostId);
+  console.log(guests);
 
-  return { guests };
+  const playlist = await prisma.playlist.findUnique({
+    where: { hostId },
+  });
+  console.log(playlist);
+  return { guests, playlist };
 }
 
 export async function action({
@@ -58,16 +63,24 @@ export async function action({
 }
 
 export default function HomePage() {
-  const { guests: intialGuests } = useLoaderData<typeof loader>();
+  const { guests: intialGuests, playlist } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [showForm, setShowForm] = useState(false);
   const [guests, setGuests] = useState<Guest[]>(intialGuests);
   const loading = navigation.state === "submitting";
   const [selectedGuest, setSelectedGuest] = useState<number | null>(null);
-  const host = JSON.parse(sessionStorage.getItem("host") || "{}");
-  const hostId = host?.id;
-  const hostToken = host.hostToken;
+
+  let host;
+  const [hostId, setHostId] = useState<string>("");
+  const [hostToken, setHostToken] = useState<string>("");
+
+  useEffect(() => {
+    host = JSON.parse(sessionStorage.getItem("host") || "{}");
+    setHostId(host?.id);
+    setHostToken(host?.hostToken);
+  }, []);
+
   useEffect(() => {
     if (actionData?.duplicate) {
       toast.error(`${actionData.guest?.name} is already part of the list!`, {
@@ -89,7 +102,6 @@ export default function HomePage() {
   }, [actionData]);
 
   const copyLink = (token: string, name: string) => {
-    const hostToken = localStorage.getItem("hostToken");
     const inviteLink = `${window.location.origin}/invite/${token}?host=${hostToken}`;
     navigator.clipboard.writeText(inviteLink);
     toast.success(`${name}'s invite link copied! `);
@@ -144,11 +156,21 @@ export default function HomePage() {
           </button>
         )}
         <div>
-          <Link to={`/createplaylist?host=${hostId}&token=${hostToken}`}>
-            <button className="p-2 bg-blue-700 text-teal-100 rounded-lg mb-3">
-              Create Playlist!
-            </button>
-          </Link>
+          {playlist ? (
+            <Link
+              to={`/mixroom?playlist=${playlist.id}&token=${hostToken}&playlistSpotifyId=${playlist.spotifyId}`}
+            >
+              <button className="p-2 bg-blue-700 text-teal-100 rounded-lg mb-3">
+                Add to playlist
+              </button>
+            </Link>
+          ) : (
+            <Link to={`/createplaylist?host=${hostId}&hostToken=${hostToken}`}>
+              <button className="p-2 bg-blue-700 text-teal-100 rounded-lg mb-3">
+                Create playlist
+              </button>
+            </Link>
+          )}
         </div>
       </div>
       <div className="w-full flex-1 mt-8 max-h[60vh] overflow-y-auto hide-scrollbar">

@@ -2,10 +2,10 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
   index("routes/home.tsx"),
-  route("guest/invite/:token", "routes/guest/invite.$token.tsx"),
+  route("/invite/:token", "routes/guest/invite.$token.tsx"),
   route("host/setup", "routes/host/setup.tsx"),
   route("host/invite", "routes/host/home.admin.tsx"),
-  route("/mixroom", "routes/guest/mixroom.tsx"),
+  route("/mixroom", "routes/common/mixroom.tsx"),
   route("/createplaylist", "routes/host/create.playlist.tsx"),
   route("/api/spotify/authenticate", "routes/api/spotify.auth.tsx"),
   route("/api/spotify/search", "routes/api/spotify.search.tsx"),

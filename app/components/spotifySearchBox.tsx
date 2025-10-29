@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AddToPlaylistButton } from "./AddToPlaylistButton";
+import { usePlaylist } from "~/context/PlaylistContext";
 
 interface Track {
   id: string;
@@ -12,11 +13,13 @@ interface Track {
 export function SpotifySearchBox({
   token,
   playlistId,
+  playlistSpotifyId,
   eraStart,
   eraEnd,
 }: {
   token: string;
-  playlistId: string;
+  playlistId: number;
+  playlistSpotifyId: string;
   eraStart?: number | null;
   eraEnd?: number | null;
 }) {
@@ -26,8 +29,9 @@ export function SpotifySearchBox({
   const [cache, setCache] = useState<Record<string, Track[]>>({});
   const [hostId, setHostId] = useState<number | null>(null);
 
+  const { tracks: playlistTracks } = usePlaylist();
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const savedHost = sessionStorage.getItem("host");
     if (savedHost) {
       try {
@@ -38,10 +42,10 @@ export function SpotifySearchBox({
       }
     }
 
-    const saved = localStorage.getItem("songSearchCache");
-    if (saved) {
+    const savedCache = localStorage.getItem("songSearchCache");
+    if (savedCache) {
       try {
-        setCache(JSON.parse(saved));
+        setCache(JSON.parse(savedCache));
       } catch {
         localStorage.removeItem("songSearchCache");
       }
@@ -79,12 +83,16 @@ export function SpotifySearchBox({
       const newCache = { ...cache, [cacheKey]: tRacks };
       setCache(newCache);
       localStorage.setItem("songSearchCache", JSON.stringify(newCache));
-      setTracks(data.tracks || []);
+      setTracks(tRacks);
       setLoading(false);
     }, 500);
 
     return () => clearTimeout(delay);
-  }, [query, eraStart, eraEnd, token, tracks]);
+  }, [query, eraStart, eraEnd, token, hostId]);
+
+  const playlistIds = new Set(playlistTracks.map((t) => t.id));
+  const visibleTracks = tracks.filter((t) => !playlistIds.has(t.id));
+
   return (
     <div className="relative w-full max-w-lg mx-auto">
       <input
@@ -96,13 +104,16 @@ export function SpotifySearchBox({
       />
       {loading && <p className="text-gray-500">Searching...</p>}
 
-      {!loading && tracks.length > 0 && (
-        <ul className="space-y-3">
-          {tracks.map((t) => (
-            <li key={t.id} className="flex items-center gap-3 border-b pb-2">
+      {!loading && visibleTracks.length && (
+        <ul className="space-y-3 h-[220px] overflow-y-auto">
+          {visibleTracks.map((t) => (
+            <li
+              key={t.id}
+              className="flex items-center gap-3 border-b pb-2 hide-scrollbar"
+            >
               <img src={t.image} alt={t.name} className="w-12 h-12 rounded" />
               <div className="flex-1">
-                <p className="font-semibold">{t.name}</p>
+                <p className="font-semibold text-black">{t.name}</p>
                 <p className="text-sm text-gray-500">
                   {t.artist} • {t.year}
                 </p>
@@ -110,11 +121,19 @@ export function SpotifySearchBox({
               <AddToPlaylistButton
                 trackUri={`spotify:track:${t.id}`}
                 playlistId={playlistId}
+                playlistSpotifyId={playlistSpotifyId}
                 token={token}
+                name={t.name}
+                artist={t.artist}
+                albumArt={t.image}
+                trackId={t.id}
               />
             </li>
           ))}
         </ul>
+      )}
+      {!loading && !visibleTracks.length && query && (
+        <p className="text-gray-500">No new songs found.</p>
       )}
     </div>
   );

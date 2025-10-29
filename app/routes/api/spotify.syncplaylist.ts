@@ -47,5 +47,5 @@ export async function action({ request }: { request: Request }) {
     data: { spotifyId: spotifyData.id },
   });
 
-  return Response.json({ playlist: updated });
+  return { playlist: updated };
 }

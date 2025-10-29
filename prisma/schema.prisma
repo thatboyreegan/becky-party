@@ -32,19 +32,20 @@ model Guest {
 }
 
 model Song {
-  id          Int       @id @default(autoincrement())
-  spotifyId   String    @unique
-  title       String
-  artist      String
-  albumArt    String?
-  releaseYear Int?
-  addedById   Int?
-  addedBy     Guest?    @relation("AddedBy", fields: [addedById], references: [id])
-  votesCount  Int       @default(0)
-  createdAt   DateTime  @default(now())
-  votes       Vote[]
-  Playlist    Playlist? @relation(fields: [playlistId], references: [id])
-  playlistId  Int?
+  id                Int       @id @default(autoincrement())
+  spotifyId         String    @unique
+  title             String
+  artist            String
+  albumArt          String?
+  releaseYear       Int?
+  addedById         Int?
+  addedBy           Guest?    @relation("AddedBy", fields: [addedById], references: [id])
+  votesCount        Int       @default(0)
+  createdAt         DateTime  @default(now())
+  votes             Vote[]
+  Playlist          Playlist? @relation(fields: [playlistId], references: [id])
+  playlistId        Int?
+  spotifyPlaylistId String?
 }
 
 model Vote {
@@ -60,14 +61,14 @@ model Vote {
 }
 
 model Host {
-  id                    Int        @id @default(autoincrement())
+  id                    Int       @id @default(autoincrement())
   name                  String
-  hostToken             String     @unique @default(uuid())
+  hostToken             String    @unique @default(uuid())
   spotifyAccessToken    String?
   spotifyRefreshToken   String?
   spotifyTokenExpiresAt DateTime? // unix time or Date
-  createdAt             DateTime   @default(now())
-  Playlist              Playlist[]
+  createdAt             DateTime  @default(now())
+  Playlist              Playlist?
   Guest                 Guest[]
 }
 
@@ -80,7 +81,7 @@ model Playlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   songs     Song[]
-  hostId    Int?
+  hostId    Int?     @unique
   host      Host?    @relation(fields: [hostId], references: [id])
   spotifyId String?
 }
